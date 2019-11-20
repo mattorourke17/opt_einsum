@@ -3,6 +3,7 @@ Required functions for optimized contractions of numpy arrays using pytorch.
 """
 
 import numpy as np
+import os
 
 from ..parser import convert_to_valid_einsum_chars
 from ..sharing import to_backend_cache_wrap
@@ -13,9 +14,8 @@ __all__ = ["transpose", "tensordot", "to_torch", "build_expression", "evaluate_c
 _TORCH_DEVICE = None
 _TORCH_HAS_TENSORDOT = None
 
-#save tensordot intermediates to disk (True) or try to store them all in RAM (False)
-global TDOT_TO_DISK
-TDOT_TO_DISK = True
+#save tensordot intermediates to disk ('True') or try to store them all in RAM ('False')
+TDOT_TO_DISK = os.environ.get('TORCH_TENSORDOT_TO_DISK', 'False')
 
 _torch_symbols_base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -34,10 +34,13 @@ def _get_torch_and_device():
 
 # wrap the custom tensordot class
 def diff_tdot(A, B, axes):
-    if TDOT_TO_DISK:
+    if TDOT_TO_DISK in ['True', 'TRUE', 'true']:
         return TDOT.apply(A, B, axes, True)
+    elif TDOT_TO_DISK in ['False', 'FALSE', 'false']:
+        return TDOT.apply(A, B, axes, False)
     else:
-        return TDOT.apply(A, B, axes, False) 
+        raise ValueError("""invalid specification for TORCH_TENSORDOT_TO_DISK.
+                        Use strings 'True' or 'False'.""")
 
 
 def transpose(a, axes):
