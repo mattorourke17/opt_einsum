@@ -5,10 +5,16 @@
 
 
 import numpy as np
-from quimb.tensor.tensor_core import rand_uuid
+import itertools
+import string
 import torch
 import os, sys
 storedir = '/home/matt/labcode/quimb_testing'
+
+RAND_UUIDS = map("".join, itertools.product(string.hexdigits, repeat=7))
+
+def rand_uuid():
+    return next(RAND_UUIDS)
 
 class Tensordot(torch.autograd.Function):
     @staticmethod
